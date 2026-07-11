@@ -1,0 +1,15 @@
+logs/
+
+*.log
+
+*.swp
+
+*.tmp
+
+*.bak
+
+.webstorm/
+
+.idea/
+
+.DS_Store
