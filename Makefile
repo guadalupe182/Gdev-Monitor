@@ -49,3 +49,17 @@ uninstall:
 
 clean:
 	@find . -name "*.log" -delete
+run:
+	./bin/gdev
+
+tv:
+	./bin/gdev tv
+
+laptop:
+	./bin/gdev laptop
+
+doctor:
+	./bin/gdev doctor
+
+status:
+	./bin/gdev status
