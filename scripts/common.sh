@@ -119,3 +119,61 @@ cat <<EOF
 EOF
 
 }
+
+########################################
+# Spinner
+########################################
+
+spinner() {
+
+    local message="$1"
+    shift
+
+    local pid
+    local delay=0.10
+
+    local frames=(
+        "⠋"
+        "⠙"
+        "⠹"
+        "⠸"
+        "⠼"
+        "⠴"
+        "⠦"
+        "⠧"
+        "⠇"
+        "⠏"
+    )
+
+    "$@" &
+    pid=$!
+
+    tput civis
+
+    while kill -0 "$pid" 2>/dev/null; do
+
+        for frame in "${frames[@]}"; do
+
+            printf "\r%s %s" "$frame" "$message"
+
+            sleep "$delay"
+
+            kill -0 "$pid" 2>/dev/null || break
+
+        done
+
+    done
+
+    wait "$pid"
+    local status=$?
+
+    tput cnorm
+
+    if [[ "$status" -eq 0 ]]; then
+        printf "\r✔ %s\n" "$message"
+    else
+        printf "\r✖ %s\n" "$message"
+    fi
+
+    return "$status"
+}
