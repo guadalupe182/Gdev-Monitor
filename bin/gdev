@@ -4,29 +4,41 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
+source "$ROOT_DIR/scripts/common.sh"
+
+info "Starting Gdev Monitor..."
+
 case "${1:-help}" in
     tv)
-        bash "$ROOT_DIR/scripts/tv-mode.sh"
+        exec bash "$ROOT_DIR/scripts/tv-mode.sh"
         ;;
+
     laptop)
-        bash "$ROOT_DIR/scripts/laptop-mode.sh"
+        exec bash "$ROOT_DIR/scripts/laptop-mode.sh"
         ;;
+
     doctor)
         echo "Doctor mode (coming soon)"
         ;;
+
     status)
         echo "Status mode (coming soon)"
         ;;
-    help|*)
+
+    help|-h|--help)
         cat <<EOF
 Gdev Monitor
 
 Usage:
-
-gdev tv
-gdev laptop
-gdev doctor
-gdev status
+    gdev tv
+    gdev laptop
+    gdev doctor
+    gdev status
 EOF
+        ;;
+
+    *)
+        error "Unknown command: $1"
+        exit 1
         ;;
 esac
