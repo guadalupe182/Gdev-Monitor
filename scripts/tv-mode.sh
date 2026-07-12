@@ -1,140 +1,72 @@
 #!/usr/bin/env bash
+# scripts/tv-mode.sh
 
-################################################################################
-#
-# GDEV TV MODE
-#
-# Activa un monitor virtual usando VKMS para utilizar Moonlight/Sunshine
-#
-################################################################################
-
-# Importar el módulo de logger de forma segura
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-if [[ -f "$ROOT_DIR/scripts/lib/logger.sh" ]]; then
-    source "$ROOT_DIR/scripts/lib/logger.sh"
-else
-    echo "[ERROR] No se pudo cargar el logger en $ROOT_DIR/scripts/lib/logger.sh" >&2
-    exit 1
-fi
-
-# Importar el módulo de spinner de forma segura
-if [[ -f "$ROOT_DIR/scripts/lib/spinner.sh" ]]; then
-    source "$ROOT_DIR/scripts/lib/spinner.sh"
-else
-    log_error "No se pudo cargar el spinner en $ROOT_DIR/scripts/lib/spinner.sh"
-    exit 1
-fi
+[[ -f "$ROOT_DIR/scripts/lib/logger.sh" ]] && source "$ROOT_DIR/scripts/lib/logger.sh"
+[[ -f "$ROOT_DIR/scripts/lib/spinner.sh" ]] && source "$ROOT_DIR/scripts/lib/spinner.sh"
 
 set -e
-
-################################################################################
-
 clear
-
-echo
 echo "=============================================="
-echo "        GDEV TV MODE v1.0"
+echo "        GDEV TV MODE v2.0 (Custom Profiles)"
 echo "=============================================="
 echo
 
-################################################################################
-# VERIFICACIONES
-################################################################################
-
-log_info "Verificando entorno..."
-
-if [[ "$XDG_SESSION_TYPE" != "x11" ]]; then
-    log_error "Este script sólo funciona en X11."
-    exit 1
+# --- CARGAR PERFIL ---
+PROFILE="$ROOT_DIR/profiles/tv.conf"
+if [[ -f "$PROFILE" ]]; then
+    source "$PROFILE"
+    log_ok "Perfil cargado con éxito desde profiles/tv.conf"
+else
+    log_info "No se encontró perfil. Usando valores por defecto."
+    RESOLUTION="1280x720"
+    SCALE="1.0x1.0"
+    DPI="96"
+    MANAGE_AUDIO=false
 fi
 
-log_ok "Sesión X11 detectada."
-
-################################################################################
-
-log_info "Verificando xrandr..."
-
-command -v xrandr >/dev/null || {
-    log_error "xrandr no está instalado."
-    exit 1
-}
-
-log_ok "xrandr encontrado."
-
-################################################################################
-
-log_info "Cargando VKMS..."
-
-# Forzamos sudo aquí para que pongas la contraseña antes de lanzar el spinner
 sudo true
 
+# --- MANEJO DE AUDIO (NUEVO) ---
+if [[ "$MANAGE_AUDIO" == true ]]; then
+    log_info "Configurando sumidero de audio virtual para Sunshine..."
+    # Crear un sumidero nulo para capturar el audio del sistema
+    if ! pactl list short modules | grep -q "sink_name=$AUDIO_SINK_NAME"; then
+        pactl load-module module-null-sink sink_name="$AUDIO_SINK_NAME" sink_properties=device.description="Sunshine_Audio_Stream" >/dev/null
+    fi
+    # Establecerlo como dispositivo por defecto
+    pactl set-default-sink "$AUDIO_SINK_NAME"
+    log_ok "Audio del sistema redirigido a Sunshine ($AUDIO_SINK_NAME)."
+fi
+
+# --- FIREWALL ---
+log_info "Abriendo puertos en el firewall para Sunshine..."
+sudo ufw allow 47984,47989,48010,8261,8262/tcp >/dev/null
+sudo ufw allow 47998,47999,48000,48002,48010/udp >/dev/null
+
+# --- PROPORCIONAR MONITOR ---
+log_info "Cargando VKMS..."
 sudo modprobe vkms &
 show_spinner $!
 echo ""
 
-################################################################################
-
 log_info "Esperando monitor virtual..."
-
 for i in {1..10}; do
-    if xrandr | grep -q "Virtual-1-1"; then
-        log_ok "Monitor detectado."
-        break
-    fi
-    sleep 1 &
-    show_spinner $!
+    if xrandr | grep -q "Virtual-1-1"; then break; fi
+    sleep 1 & show_spinner $!; echo ""
 done
 
-################################################################################
-
-if ! xrandr | grep -q "Virtual-1-1"; then
-    log_error "No apareció Virtual-1-1"
-    exit 1
-fi
-
-################################################################################
-
-log_info "Configurando resolución..."
-
-xrandr \
-    --output Virtual-1-1 \
-    --mode 1280x720 \
-    --right-of eDP-1
-
-log_ok "Resolución aplicada (1280x720)."
-
-################################################################################
+# --- ESCALADO Y DPI (NUEVO) ---
+log_info "Aplicando escalado ($SCALE) y DPI ($DPI) al monitor virtual..."
+xrandr --output Virtual-1-1 --mode "$RESOLUTION" --scale "$SCALE" --dpi "$DPI" --right-of eDP-1
+log_ok "Pantalla virtual configurada correctamente."
 
 echo
-log_info "Monitores actuales:"
-echo
-
-xrandr --listmonitors
-
-################################################################################
-# INICIANDO SUNSHINE EN SEGUNDO PLANO
-################################################################################
-
-echo
-log_info "Lanzando servidor Sunshine en segundo plano..."
-
-# Obtenemos la ruta absoluta del directorio donde vive este script
+log_info "Lanzando servidor Sunshine..."
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-# Ejecuta sunshine.sh de fondo y manda los logs a un archivo temporal
 "$SCRIPT_DIR/sunshine.sh" > /tmp/sunshine.log 2>&1 &
+log_ok "Sunshine corriendo de fondo."
 
-log_ok "Sunshine corriendo de fondo (Logs en /tmp/sunshine.log)."
-
-################################################################################
-# MENSAJE DE SALIDA
-################################################################################
-
-echo
 echo "=============================================="
-log_ok "Modo TV activado con éxito."
-echo
-echo "Ahora solamente abre Moonlight en tu dispositivo,"
-echo "selecciona 'Desktop' y disfruta tu segundo monitor 😎"
+log_ok "¡Modo TV con Perfil Avanzado Activo! 😎"
 echo "=============================================="
-echo
