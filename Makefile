@@ -1,21 +1,21 @@
-PROJECT := gdev-tv
+PROJECT := gdev-monitor
 VERSION := 0.1.0
 
-.PHONY: help init lint fmt test doctor run install uninstall clean
+.PHONY: help init lint fmt test run tv laptop doctor status install uninstall clean
 
 help:
 	@echo ""
-	@echo "GDEV TV MODE"
+	@echo "GDEV Monitor"
 	@echo ""
-	@echo " make init"
-	@echo " make lint"
-	@echo " make fmt"
-	@echo " make test"
-	@echo " make doctor"
-	@echo " make run"
-	@echo " make install"
-	@echo " make uninstall"
-	@echo " make clean"
+	@echo "make run"
+	@echo "make tv"
+	@echo "make laptop"
+	@echo "make doctor"
+	@echo "make status"
+	@echo "make lint"
+	@echo "make fmt"
+	@echo "make test"
+	@echo "make clean"
 	@echo ""
 
 init:
@@ -33,22 +33,6 @@ fmt:
 test:
 	@echo "No tests yet."
 
-doctor:
-	@./bin/gdev-tv doctor
-
-run:
-	@./bin/gdev-tv
-
-install:
-	@chmod +x install.sh
-	@./install.sh
-
-uninstall:
-	@chmod +x uninstall.sh
-	@./uninstall.sh
-
-clean:
-	@find . -name "*.log" -delete
 run:
 	./bin/gdev
 
@@ -63,3 +47,12 @@ doctor:
 
 status:
 	./bin/gdev status
+
+install:
+	@echo "Install (coming soon)"
+
+uninstall:
+	@echo "Uninstall (coming soon)"
+
+clean:
+	@find . -name "*.log" -delete
