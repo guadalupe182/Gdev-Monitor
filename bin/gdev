@@ -4,25 +4,66 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-source "$ROOT_DIR/scripts/common.sh"
-
-info "Starting Gdev Monitor..."
+# Cargar tus utilidades de log nativas
+if [[ -f "$ROOT_DIR/scripts/common.sh" ]]; then
+    source "$ROOT_DIR/scripts/common.sh"
+else
+    # Fallback por si ejecutas de forma global y cambian los paths relativos
+    info() { echo -e "\033[0;34m[INFO]\033[0m $*"; }
+    error() { echo -e "\033[0;31m[ERROR]\033[0m $*"; }
+fi
 
 case "${1:-help}" in
-    tv)
+    start)
+        info "Iniciando Gdev Monitor en Modo TV..."
         exec bash "$ROOT_DIR/scripts/tv-mode.sh"
         ;;
 
-    laptop)
+    stop)
+        info "Restaurando Gdev Monitor a Modo Laptop..."
         exec bash "$ROOT_DIR/scripts/laptop-mode.sh"
         ;;
 
+    restart)
+        info "Reiniciando entorno GDEV TV..."
+        bash "$ROOT_DIR/scripts/laptop-mode.sh"
+        sleep 2
+        exec bash "$ROOT_DIR/scripts/tv-mode.sh"
+        ;;
+
     doctor)
-        echo "Doctor mode (coming soon)"
+        info "Ejecutando diagnóstico del sistema operativo y hardware..."
+        # Llama directamente a las comprobaciones que programamos en el Sprint 2
+        bash "$ROOT_DIR/scripts/display.sh" --check-env
+        bash "$ROOT_DIR/scripts/display.sh" --check-gpu
         ;;
 
     status)
-        echo "Status mode (coming soon)"
+        echo "=============================================="
+        echo "          ESTADO DE GDEV TV MODE"
+        echo "=============================================="
+
+        # 1. Validar Monitor Virtual
+        if xrandr | grep -q "Virtual-1-1"; then
+            echo -e "Monitor Virtual:   \033[0;32m[ACTIVO]\033[0m (Virtual-1-1)"
+        else
+            echo -e "Monitor Virtual:   \033[0;31m[INACTIVO]\033[0m"
+        fi
+
+        # 2. Validar Servidor Sunshine
+        if pkill -0 -f sunshine 2>/dev/null; then
+            echo -e "Servidor Sunshine: \033[0;32m[CORRIENDO]\033[0m"
+        else
+            echo -e "Servidor Sunshine: \033[0;31m[DETENIDO]\033[0m"
+        fi
+
+        # 3. Validar Redirección de Audio Virtual
+        if pactl list short modules | grep -q "sink_name=Gdev_Virtual_Audio"; then
+            echo -e "Audio Virtual:     \033[0;32m[REDIRECCIONADO (TV)]\033[0m"
+        else
+            echo -e "Audio Virtual:     \033[0;34m[NATIVO (Laptop)]\033[0m"
+        fi
+        echo "=============================================="
         ;;
 
     help|-h|--help)
@@ -30,8 +71,9 @@ case "${1:-help}" in
 Gdev Monitor
 
 Usage:
-    gdev tv
-    gdev laptop
+    gdev start
+    gdev stop
+    gdev restart
     gdev doctor
     gdev status
 EOF

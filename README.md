@@ -1,142 +1,278 @@
+Aquí está el `README.md` completo, listo para copiar y pegar en un solo archivo.
+
+````markdown
 # 📺 GDEV TV Mode
 
-> Convierte un monitor virtual de Linux en una segunda pantalla física utilizando **VKMS + Sunshine + Moonlight**, automatizando toda la configuración con un solo comando.
+Convierte tu laptop en una estación de transmisión automatizada. Crea un monitor virtual en Linux y transmite una segunda pantalla física real utilizando **VKMS + Sunshine + Moonlight** con un solo comando.
 
----
-
-# 🚀 Objetivo
-
-GDEV TV Mode nace para resolver un problema muy común en Linux:
-
-- Compartir pantalla únicamente duplica el escritorio.
-- No existe un monitor HDMI conectado.
-- Se desea utilizar una TV como un segundo monitor real.
-- Sunshine ya soporta múltiples displays, pero configurarlo manualmente es tedioso.
-
-Este proyecto automatiza todo el proceso.
+🚀 **GDEV TV Mode** nace para resolver de forma automática el tedioso proceso de configurar pantallas virtuales, ajustar el firewall, redireccionar audio y establecer resoluciones personalizadas en servidores gráficos X11.
 
 ---
 
 # ✨ Características
 
-- ✔ Creación automática de monitor virtual (VKMS)
-- ✔ Configuración automática mediante xrandr
-- ✔ Integración con Sunshine
-- ✔ Compatible con Moonlight
-- ✔ Restauración del escritorio
-- ✔ Detección automática del entorno
-- ✔ Logs
-- ✔ Configuración mediante archivo
-- ✔ Arquitectura modular
+- ✔ Creación automática de monitor virtual mediante **VKMS**.
+- ✔ Configuración dinámica utilizando **xrandr**.
+- ✔ Resoluciones, escalado y DPI personalizables.
+- ✔ Redirección automática del audio hacia Sunshine.
+- ✔ Restauración automática del audio al modo Laptop.
+- ✔ Apertura y cierre automático de puertos mediante **UFW**.
+- ✔ Diagnóstico completo del sistema (`doctor`).
+- ✔ Administración completa mediante una sola CLI.
+- ✔ Scripts modulares y fáciles de extender.
 
 ---
 
 # 📦 Requisitos
 
-Actualmente probado con:
-
-| Software | Versión |
-|----------|----------|
-| Linux Mint | 22.3 |
-| Cinnamon | X11 |
-| Sunshine | Flatpak |
-| Moonlight | Android TV |
-| Kernel | 6.x |
-| VKMS | habilitado |
+- Linux Mint 22.x (recomendado)
+- Ubuntu 22.04+
+- X11 (Wayland no soportado actualmente)
+- Bash
+- xrandr
+- modprobe
+- ufw
+- pactl (PulseAudio o PipeWire)
+- Sunshine
+- Moonlight
 
 ---
 
-# 📂 Arquitectura
+# 📂 Estructura del proyecto
 
-```
+```text
 gdev-tv-mode/
-
+├── assets/
+│   └── screenshots/
+│
 ├── bin/
-│   └── gdev-tv
+│   └── gdev
 │
 ├── config/
 │   └── default.conf
 │
-├── lib/
-│   ├── audio.sh
-│   ├── checks.sh
-│   ├── colors.sh
-│   ├── config.sh
+├── docs/
+│   ├── INSTALL.md
+│   ├── CONFIG.md
+│   └── TROUBLESHOOTING.md
+│
+├── scripts/
 │   ├── display.sh
-│   ├── helpers.sh
-│   ├── logger.sh
-│   ├── sunshine.sh
-│   ├── system.sh
-│   └── vkms.sh
+│   ├── laptop-mode.sh
+│   └── tv-mode.sh
 │
-├── logs/
+├── src/
 │
-├── README.md
+├── tests/
+│
+├── Makefile
 ├── install.sh
-└── uninstall.sh
+├── uninstall.sh
+└── README.md
 ```
 
 ---
 
 # 🚀 Instalación
 
+Clona el repositorio:
+
 ```bash
-git clone https://github.com/<usuario>/gdev-tv-mode.git
+git clone https://github.com/TU-USUARIO/gdev-tv-mode.git
+```
 
+Entra al proyecto:
+
+```bash
 cd gdev-tv-mode
+```
 
+Da permisos:
+
+```bash
 chmod +x install.sh
+```
 
+Instala:
+
+```bash
 ./install.sh
 ```
 
----
-
-# Uso
-
-## Activar modo TV
+Verifica:
 
 ```bash
-gdev-tv start
+gdev-tv --help
 ```
 
 ---
 
-## Restaurar modo Laptop
+# 🩺 Diagnóstico
 
-```bash
-gdev-tv stop
-```
-
----
-
-## Estado
-
-```bash
-gdev-tv status
-```
-
----
-
-## Diagnóstico
+Antes de iniciar, verifica que todo el sistema esté listo.
 
 ```bash
 gdev-tv doctor
 ```
 
+El diagnóstico revisa:
+
+- Kernel Linux
+- VKMS
+- xrandr
+- Sunshine
+- PulseAudio/PipeWire
+- GPU Intel
+- GPU AMD
+- GPU Nvidia
+- Firewall
+- Permisos
+
 ---
 
-## Reiniciar
+# ▶️ Iniciar TV Mode
+
+```bash
+gdev-tv start
+```
+
+Este comando realiza automáticamente:
+
+- Carga VKMS
+- Espera la aparición del monitor virtual
+- Configura resolución
+- Configura escalado
+- Configura DPI
+- Configura Sunshine
+- Redirecciona el audio
+- Abre los puertos necesarios
+- Inicia Sunshine
+
+Todo en un solo comando.
+
+---
+
+# 📺 Conectarse desde Moonlight
+
+Una vez iniciado:
+
+1. Abre Moonlight.
+2. Detecta Sunshine.
+3. Selecciona Desktop.
+4. Comienza a transmitir.
+
+La TV mostrará únicamente la pantalla virtual.
+
+La pantalla de la laptop permanece independiente.
+
+---
+
+# 📊 Estado
+
+Consultar el estado actual:
+
+```bash
+gdev-tv status
+```
+
+Ejemplo:
+
+```text
+Virtual Display : ONLINE
+
+Resolution      : 1280x720
+
+Scale           : 1.0
+
+Audio           : Virtual Sink
+
+Firewall        : OPEN
+
+Sunshine        : RUNNING
+```
+
+---
+
+# ⏹️ Detener
+
+Para regresar al modo Laptop:
+
+```bash
+gdev-tv stop
+```
+
+El proceso realiza:
+
+- Cierra Sunshine
+- Elimina el monitor virtual
+- Cierra firewall
+- Devuelve el audio a las bocinas
+- Limpia recursos temporales
+
+---
+
+# 🔄 Reiniciar
 
 ```bash
 gdev-tv restart
 ```
 
+Equivale a:
+
+```bash
+gdev-tv stop
+gdev-tv start
+```
+
 ---
 
-# Flujo
+# ⚙️ Configuración
 
+Toda la configuración se encuentra en:
+
+```text
+config/default.conf
 ```
+
+Ejemplo:
+
+```bash
+########################################
+# Pantalla
+########################################
+
+RESOLUTION="1280x720"
+
+SCALE="1.0x1.0"
+
+DPI="96"
+
+########################################
+# Audio
+########################################
+
+MANAGE_AUDIO=true
+
+AUDIO_SINK_NAME="Gdev_Virtual_Audio"
+
+########################################
+# Sunshine
+########################################
+
+AUTO_START_SUNSHINE=true
+
+########################################
+# Firewall
+########################################
+
+MANAGE_FIREWALL=true
+```
+
+---
+
+# 🎮 Flujo de funcionamiento
+
+```text
 Usuario
 
 ↓
@@ -145,7 +281,7 @@ gdev-tv start
 
 ↓
 
-Verificaciones
+Doctor
 
 ↓
 
@@ -153,11 +289,19 @@ VKMS
 
 ↓
 
-Virtual Display
+Monitor Virtual
 
 ↓
 
 xrandr
+
+↓
+
+Audio Virtual
+
+↓
+
+Firewall
 
 ↓
 
@@ -169,82 +313,182 @@ Moonlight
 
 ↓
 
-Segundo Monitor listo
+TV
 ```
 
 ---
 
-# Configuración
+# 📁 Scripts
 
-Toda la configuración vive en
+## display.sh
 
-```
-config/default.conf
-```
+Diagnóstico del sistema.
 
-Ejemplo:
+Funciones:
 
-```ini
-MONITOR=eDP-1
-
-VIRTUAL=Virtual-1-1
-
-WIDTH=1920
-
-HEIGHT=1080
-
-POSITION=right
-
-AUTO_START_SUNSHINE=true
-
-AUTO_LOAD_VKMS=true
-```
+- Detectar GPU
+- Detectar X11
+- Detectar Sunshine
+- Detectar VKMS
 
 ---
 
-# Roadmap
+## tv-mode.sh
 
-## v1
+Activa:
 
-- [x] Monitor Virtual
-- [x] Sunshine
-- [x] Moonlight
-- [ ] Script principal
-- [ ] Instalador
-
-## v2
-
-- [ ] Audio automático
-- [ ] Detección de DPI
-- [ ] Estado en tiempo real
-- [ ] Doctor
-
-## v3
-
-- [ ] GUI
-- [ ] Multi Monitor
-- [ ] Wayland
-- [ ] Fedora
-- [ ] Ubuntu
+- VKMS
+- xrandr
+- Audio
+- Sunshine
+- Firewall
 
 ---
 
-# Filosofía
+## laptop-mode.sh
 
-> Automatizar tareas repetitivas para que el desarrollador sólo tenga que escribir:
+Restaura:
+
+- Audio
+- Pantallas
+- Firewall
+- Sunshine
+
+---
+
+# 🔧 Makefile
+
+Compilar validaciones:
 
 ```bash
-gdev-tv start
+make test
 ```
 
-y comenzar a trabajar.
+Instalar:
+
+```bash
+make install
+```
+
+Desinstalar:
+
+```bash
+make uninstall
+```
 
 ---
 
-# Licencia
+# 📌 Comandos disponibles
 
-MIT License
+```bash
+gdev-tv doctor
+
+gdev-tv start
+
+gdev-tv stop
+
+gdev-tv restart
+
+gdev-tv status
+
+gdev-tv --help
+```
 
 ---
 
-Creado con ☕, Bash y muchas horas de debugging.
+# 🛠️ Tecnologías
+
+- Bash
+- Linux
+- VKMS
+- xrandr
+- PulseAudio
+- PipeWire
+- Sunshine
+- Moonlight
+- UFW
+
+---
+
+# 🧩 Compatibilidad
+
+Probado en:
+
+- Linux Mint 22.x
+- Ubuntu 22.04
+- Ubuntu 24.04
+
+GPU compatibles:
+
+- Intel
+- AMD
+- Nvidia
+
+---
+
+# 🚧 Roadmap
+
+- [x] CLI unificada
+- [x] Doctor
+- [x] Audio automático
+- [x] Firewall automático
+- [x] Configuración externa
+- [x] Instalador
+- [ ] Wayland
+- [ ] Multi-monitor
+- [ ] HDR
+- [ ] Perfil 4K
+- [ ] Perfil 1080p
+- [ ] Auto Update
+
+---
+
+# 🤝 Contribuir
+
+Las contribuciones son bienvenidas.
+
+Puedes colaborar con:
+
+- Nuevas funciones
+- Corrección de errores
+- Documentación
+- Compatibilidad con Wayland
+- Optimización del código
+
+Haz un Fork, crea una rama y abre un Pull Request.
+
+---
+
+# 📄 Licencia
+
+Este proyecto se distribuye bajo la licencia MIT.
+
+Puedes utilizarlo, modificarlo y distribuirlo libremente respetando los términos de dicha licencia.
+
+---
+
+# ❤️ Autor
+
+Desarrollado por **GDEV**.
+
+Creado para simplificar la transmisión de escritorios Linux mediante Sunshine + Moonlight con una configuración completamente automatizada.
+
+---
+
+# ☕ Agradecimientos
+
+Gracias a los proyectos que hacen posible este trabajo:
+
+- Linux
+- VKMS
+- xrandr
+- PulseAudio
+- PipeWire
+- Sunshine
+- Moonlight
+- La comunidad Open Source
+
+---
+
+> **GDEV TV Mode** — Convierte tu laptop Linux en una estación de streaming profesional con un solo comando.
+````
