@@ -1,58 +1,43 @@
-PROJECT := gdev-monitor
-VERSION := 0.1.0
+# Variables de rutas
+SCRIPTS_DIR := scripts
+LIB_DIR     := $(SCRIPTS_DIR)/lib
 
-.PHONY: help init lint fmt test run tv laptop doctor status install uninstall clean
+.PHONY: tv laptop doctor check-sys check-gpu help
 
-help:
-	@echo ""
-	@echo "GDEV Monitor"
-	@echo ""
-	@echo "make run"
-	@echo "make tv"
-	@echo "make laptop"
-	@echo "make doctor"
-	@echo "make status"
-	@echo "make lint"
-	@echo "make fmt"
-	@echo "make test"
-	@echo "make clean"
-	@echo ""
-
-init:
-	@echo "Checking dependencies..."
-	@command -v bash >/dev/null || exit 1
-	@command -v shellcheck >/dev/null || echo "Missing shellcheck"
-	@command -v shfmt >/dev/null || echo "Missing shfmt"
-
-lint:
-	@find . -type f -name "*.sh" -exec shellcheck {} \;
-
-fmt:
-	@find . -type f -name "*.sh" -exec shfmt -w {} \;
-
-test:
-	@echo "No tests yet."
-
-run:
-	./bin/gdev
+# ==============================================================================
+# SPRINT 1: MODOS DE PANTALLA
+# ==============================================================================
 
 tv:
-	./bin/gdev tv
+	@bash $(SCRIPTS_DIR)/tv-mode.sh
 
 laptop:
-	./bin/gdev laptop
+	@bash $(SCRIPTS_DIR)/laptop-mode.sh
 
-doctor:
-	./bin/gdev doctor
+# ==============================================================================
+# SPRINT 2: DIAGNÓSTICO Y COMPROBACIONES (El Target Fino)
+# ==============================================================================
 
-status:
-	./bin/gdev status
+## doctor: Corre todas las comprobaciones de salud del sistema de un solo golpe
+doctor: check-sys check-gpu
+	@bash -c 'source $(LIB_DIR)/logger.sh && log_ok "¡Diagnóstico completo terminado con éxito! 🩺"'
 
-install:
-	@echo "Install (coming soon)"
+## check-sys: Verifica el entorno base, X11/Wayland y dependencias del sistema
+check-sys:
+	@bash -c 'source $(LIB_DIR)/logger.sh && log_info "Iniciando detección del sistema..."'
+	@bash $(SCRIPTS_DIR)/display.sh --check-env || true
 
-uninstall:
-	@echo "Uninstall (coming soon)"
+## check-gpu: Identifica las GPUs activas (Intel/Nvidia/AMD) y sus drivers
+check-gpu:
+	@bash -c 'source $(LIB_DIR)/logger.sh && log_info "Iniciando detección de GPU..."'
+	@bash $(SCRIPTS_DIR)/display.sh --check-gpu || true
 
-clean:
-	@find . -name "*.log" -delete
+# ==============================================================================
+# UTILERÍAS
+# ==============================================================================
+
+help:
+	@echo "Comandos disponibles en Gdev-Monitor:"
+	@echo "  make tv        - Activa el modo TV (VKMS + Sunshine)"
+	@echo "  make laptop    - Revierte al modo Laptop estándar"
+	@echo "  make doctor    - Corre el diagnóstico completo del sistema (Sprint 2)"
