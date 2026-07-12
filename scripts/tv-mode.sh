@@ -8,23 +8,43 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 set -e
 clear
 echo "=============================================="
-echo "        GDEV TV MODE v1.0"
+echo "        GDEV TV MODE v2.0 (Custom Profiles)"
 echo "=============================================="
 echo
 
-log_info "Verificando entorno y xrandr..."
-[[ "$XDG_SESSION_TYPE" != "x11" ]] && { log_error "Sólo funciona en X11."; exit 1; }
-command -v xrandr >/dev/null || { log_error "xrandr no instalado."; exit 1; }
+# --- CARGAR PERFIL ---
+PROFILE="$ROOT_DIR/profiles/tv.conf"
+if [[ -f "$PROFILE" ]]; then
+    source "$PROFILE"
+    log_ok "Perfil cargado con éxito desde profiles/tv.conf"
+else
+    log_info "No se encontró perfil. Usando valores por defecto."
+    RESOLUTION="1280x720"
+    SCALE="1.0x1.0"
+    DPI="96"
+    MANAGE_AUDIO=false
+fi
 
-# Forzar sudo al inicio para el firewall y el modprobe
 sudo true
 
-# --- NUEVO: HABILITAR FIREWALL ---
+# --- MANEJO DE AUDIO (NUEVO) ---
+if [[ "$MANAGE_AUDIO" == true ]]; then
+    log_info "Configurando sumidero de audio virtual para Sunshine..."
+    # Crear un sumidero nulo para capturar el audio del sistema
+    if ! pactl list short modules | grep -q "sink_name=$AUDIO_SINK_NAME"; then
+        pactl load-module module-null-sink sink_name="$AUDIO_SINK_NAME" sink_properties=device.description="Sunshine_Audio_Stream" >/dev/null
+    fi
+    # Establecerlo como dispositivo por defecto
+    pactl set-default-sink "$AUDIO_SINK_NAME"
+    log_ok "Audio del sistema redirigido a Sunshine ($AUDIO_SINK_NAME)."
+fi
+
+# --- FIREWALL ---
 log_info "Abriendo puertos en el firewall para Sunshine..."
 sudo ufw allow 47984,47989,48010,8261,8262/tcp >/dev/null
 sudo ufw allow 47998,47999,48000,48002,48010/udp >/dev/null
-log_ok "Puertos del firewall abiertos."
 
+# --- PROPORCIONAR MONITOR ---
 log_info "Cargando VKMS..."
 sudo modprobe vkms &
 show_spinner $!
@@ -32,30 +52,21 @@ echo ""
 
 log_info "Esperando monitor virtual..."
 for i in {1..10}; do
-    if xrandr | grep -q "Virtual-1-1"; then
-        log_ok "Monitor detectado."
-        break
-    fi
-    sleep 1 &
-    show_spinner $!
+    if xrandr | grep -q "Virtual-1-1"; then break; fi
+    sleep 1 & show_spinner $!; echo ""
 done
 
-if ! xrandr | grep -q "Virtual-1-1"; then
-    log_error "No apareció Virtual-1-1"
-    exit 1
-fi
-
-log_info "Configurando resolución..."
-xrandr --output Virtual-1-1 --mode 1280x720 --right-of eDP-1
-log_ok "Resolución aplicada (1280x720)."
+# --- ESCALADO Y DPI (NUEVO) ---
+log_info "Aplicando escalado ($SCALE) y DPI ($DPI) al monitor virtual..."
+xrandr --output Virtual-1-1 --mode "$RESOLUTION" --scale "$SCALE" --dpi "$DPI" --right-of eDP-1
+log_ok "Pantalla virtual configurada correctamente."
 
 echo
-log_info "Lanzando servidor Sunshine en segundo plano..."
+log_info "Lanzando servidor Sunshine..."
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 "$SCRIPT_DIR/sunshine.sh" > /tmp/sunshine.log 2>&1 &
-log_ok "Sunshine corriendo (Logs en /tmp/sunshine.log)."
+log_ok "Sunshine corriendo de fondo."
 
-echo
 echo "=============================================="
-log_ok "Modo TV activado con éxito. 😎"
+log_ok "¡Modo TV con Perfil Avanzado Activo! 😎"
 echo "=============================================="
