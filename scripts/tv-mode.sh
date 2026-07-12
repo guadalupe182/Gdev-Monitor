@@ -111,7 +111,7 @@ info "Configurando resolución..."
 
 xrandr \
     --output Virtual-1-1 \
-    --mode 1920x1080 \
+    --mode 1280x720 \
     --right-of eDP-1
 
 ok "Resolución aplicada"
@@ -145,5 +145,39 @@ echo "Desktop"
 echo
 
 echo "y disfruta tu segundo monitor 😎"
+
+echo
+# ... Todo el código anterior de xrandr que ya tenías ...
+
+echo
+echo "=============================================="
+
+ok "Modo TV activado."
+
+echo
+
+echo "Ahora solamente abre Moonlight"
+
+echo
+
+echo "Desktop"
+
+echo
+
+echo "y disfruta tu segundo monitor 😎"
+
+# ==============================================
+#   INICIANDO SUNSHINE EN SEGUNDO PLANO
+# ==============================================
+echo
+info "Lanzando servidor Sunshine en segundo plano..."
+
+# Obtenemos la ruta absoluta del directorio donde vive este script
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Ejecuta sunshine.sh de fondo y manda los logs a un archivo temporal
+"$SCRIPT_DIR/sunshine.sh" > /tmp/sunshine.log 2>&1 &
+
+ok "Sunshine corriendo de fondo (Logs en /tmp/sunshine.log)"
 
 echo
