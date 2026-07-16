@@ -19,22 +19,18 @@ if [[ -f "$PROFILE" ]]; then
     log_ok "Perfil cargado con éxito desde profiles/tv.conf"
 else
     log_info "No se encontró perfil. Usando valores por defecto."
-    RESOLUTION="1280x720"
+    RESOLUTION="1366x768"
     SCALE="1.0x1.0"
     DPI="96"
     MANAGE_AUDIO=false
 fi
 
-sudo true
-
-# --- MANEJO DE AUDIO (NUEVO) ---
+# --- MANEJO DE AUDIO ---
 if [[ "$MANAGE_AUDIO" == true ]]; then
     log_info "Configurando sumidero de audio virtual para Sunshine..."
-    # Crear un sumidero nulo para capturar el audio del sistema
     if ! pactl list short modules | grep -q "sink_name=$AUDIO_SINK_NAME"; then
         pactl load-module module-null-sink sink_name="$AUDIO_SINK_NAME" sink_properties=device.description="Sunshine_Audio_Stream" >/dev/null
     fi
-    # Establecerlo como dispositivo por defecto
     pactl set-default-sink "$AUDIO_SINK_NAME"
     log_ok "Audio del sistema redirigido a Sunshine ($AUDIO_SINK_NAME)."
 fi
@@ -56,7 +52,7 @@ for i in {1..10}; do
     sleep 1 & show_spinner $!; echo ""
 done
 
-# --- ESCALADO Y DPI (NUEVO) ---
+# --- ESCALADO Y DPI (Escritorio Extendido Habilitado) ---
 log_info "Aplicando escalado ($SCALE) y DPI ($DPI) al monitor virtual..."
 xrandr --output Virtual-1-1 --mode "$RESOLUTION" --scale "$SCALE" --dpi "$DPI" --right-of eDP-1
 log_ok "Pantalla virtual configurada correctamente."
