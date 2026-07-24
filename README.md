@@ -3,7 +3,7 @@
 
 Convierte tu laptop Linux en una estación de transmisión automatizada. Crea un monitor virtual en Linux y transmite un escritorio extendido real utilizando **VKMS + Sunshine + Moonlight** de forma local o remota.
 
-🚀 **Gdev-Monitor** automatiza la creación de pantallas virtuales, la configuración del firewall, la administración del audio del usuario y la carga de perfiles personalizados bajo entornos gráficos **X11**. Además, integra control remoto mediante Telegram y está preparado para futuras integraciones con asistentes de voz como Alexa.
+🚀 **Gdev-Monitor** automatiza la creación de pantallas virtuales, la configuración del firewall, la administración del audio del usuario y la carga de perfiles personalizados bajo entornos gráficos **X11**. Además, integra control remoto mediante Telegram con capacidades de auto-recuperación y lanzamiento automatizado de entornos de desarrollo (IDEs).
 
 ---
 
@@ -12,25 +12,54 @@ Convierte tu laptop Linux en una estación de transmisión automatizada. Crea un
 - ✔ **Escritorio Extendido Real:** Configuración dinámica utilizando `xrandr --right-of` para extender el escritorio y mover ventanas libremente.
 - ✔ **Monitor Virtual con VKMS:** Creación automática de pantallas virtuales mediante el módulo del kernel **VKMS**.
 - ✔ **Streaming Integrado:** Compatible con **Sunshine** y clientes **Moonlight** para transmitir el escritorio con baja latencia.
-- ✔ **Control Remoto por Telegram:** Bot integrado (`bot-control.py`) para ejecutar perfiles mediante comandos (`/mododev`, `/apagar`, `/netflix`, `/scrcpy`).
-- ✔ **Aislamiento de Audio Seguro:** Manejo de sumideros virtuales con `pactl` directamente desde el espacio de usuario.
-- ✔ **Elevación de Permisos Limpia:** Uso de `sudo` únicamente para tareas del sistema como carga de módulos o configuración del firewall.
-- ✔ **Perfiles Personalizados:** Configuración dinámica mediante archivos independientes almacenados en `profiles/`.
-- ✔ **Arquitectura Modular:** Scripts separados por responsabilidad para facilitar mantenimiento y escalabilidad.
+- ✔ **Control Remoto por Telegram:** Bot integrado (`bot-control.py`) para ejecutar perfiles, consultar estado y aplicar recuperación de emergencia.
+- ✔ **Arranque de Entorno Dev:** Carga automática de IDEs (**WebStorm** e **IntelliJ IDEA**) al activar el modo desarrollo.
+- ✔ **Mecanismo de Auto-Recuperación (`/fix`):** Limpieza de pantallas colgadas y archivos `.lock` sin reiniciar el servidor gráfico.
+- ✔ **Aislamiento de Audio Seguro:** Manejo de sumideros virtuales mediante `pactl` directamente desde el espacio de usuario.
+- ✔ **Elevación de Permisos Limpia:** Uso de reglas `sudoers` sin contraseña para `modprobe`, `xrandr` y administración de servicios.
+- ✔ **Perfiles Personalizados:** Configuración dinámica mediante archivos independientes almacenados en `profiles/` (por ejemplo `tv.conf`).
+
+---
+
+# 🏗️ Arquitectura
+
+```text
+               ┌────────────────────────────┐
+               │       Telegram Bot         │
+               │     bot-control.py         │
+               └──────────────┬─────────────┘
+                              │
+                              ▼
+                    Streaming Controller
+                              │
+        ┌─────────────────────┼──────────────────────┐
+        ▼                     ▼                      ▼
+   VKMS Virtual        Sunshine Server         Audio Routing
+     Display             Streaming           PulseAudio/PipeWire
+        │                     │                      │
+        └──────────────► Moonlight ◄─────────────────┘
+```
 
 ---
 
 # 📦 Requisitos
 
-- Linux (Probado en Linux Mint / Ubuntu con X11)
+## Sistema Operativo
+
+- Linux Mint 22+
+- Ubuntu 22.04+
+- Cualquier distribución basada en Debian compatible con X11
+
+## Dependencias
+
 - Python 3.x
 - `python-telegram-bot`
 - `xrandr`
-- `modprobe` (VKMS)
+- `modprobe`
 - `ufw`
-- `pactl` (PulseAudio o PipeWire)
-- Sunshine
-- Moonlight
+- `pactl`
+- `Sunshine`
+- `Moonlight`
 - Git
 - Make
 
@@ -42,17 +71,21 @@ Convierte tu laptop Linux en una estación de transmisión automatizada. Crea un
 Gdev-Monitor/
 ├── bin/
 │   └── gdev
+│
 ├── profiles/
 │   └── tv.conf
+│
 ├── scripts/
 │   ├── lib/
 │   │   ├── logger.sh
 │   │   └── spinner.sh
+│   │
 │   ├── bot-control.py
 │   ├── laptop-mode.sh
 │   ├── streaming-control.sh
 │   ├── sunshine.sh
 │   └── tv-mode.sh
+│
 ├── Makefile
 ├── install.sh
 ├── LICENSE
@@ -63,7 +96,7 @@ Gdev-Monitor/
 
 # 🚀 Instalación
 
-## Clonar el repositorio
+## 1. Clonar el repositorio
 
 ```bash
 git clone https://github.com/guadalupe182/Gdev-Monitor.git
@@ -73,7 +106,7 @@ cd Gdev-Monitor
 
 ---
 
-## Dar permisos
+## 2. Dar permisos
 
 ```bash
 chmod +x install.sh
@@ -83,7 +116,7 @@ chmod +x scripts/*.sh
 
 ---
 
-## Ejecutar el instalador
+## 3. Ejecutar el instalador
 
 ```bash
 ./install.sh
@@ -91,17 +124,19 @@ chmod +x scripts/*.sh
 
 El instalador configura automáticamente:
 
-- VKMS
-- Firewall (UFW)
-- Scripts
-- Permisos necesarios
-- Entorno de ejecución
+- ✔ VKMS
+- ✔ Firewall (UFW)
+- ✔ Scripts
+- ✔ Makefile
+- ✔ Acceso global mediante `gdev`
+- ✔ Reglas sudoers necesarias
+- ✔ Configuración inicial
 
 ---
 
-# 🚀 Uso
+# 🚀 Uso desde Terminal
 
-## Activar el modo TV
+## Activar Modo TV
 
 ```bash
 make start
@@ -115,31 +150,66 @@ gdev start
 
 ---
 
-## Regresar al modo Laptop
+## Abrir entorno de desarrollo
+
+```bash
+make dev-apps
+```
+
+Abre automáticamente:
+
+- IntelliJ IDEA
+- WebStorm
+
+---
+
+## Volver al modo Laptop
 
 ```bash
 make stop
 ```
 
-o
+---
+
+## Recuperación de emergencia
 
 ```bash
-gdev stop
+make fix
 ```
+
+Este comando:
+
+- elimina archivos `.lock`
+- reinicia VKMS
+- reconfigura pantallas
+- recupera Sunshine
+- limpia estados inconsistentes
 
 ---
 
 # 🤖 Bot de Telegram
 
-Ejecutar en segundo plano:
+## Comandos disponibles
+
+| Comando | Descripción |
+|----------|-------------|
+| `/mododev` | Activa el escritorio extendido e inicia WebStorm + IntelliJ IDEA. |
+| `/status` | Consulta el estado del sistema. |
+| `/apagar` | Restaura el modo Laptop y detiene Sunshine. |
+| `/fix` | Ejecuta el mecanismo de recuperación. |
+| `/help` | Muestra todos los comandos disponibles. |
+
+---
+
+## Ejecutar el bot
 
 ```bash
-cd scripts
-
-nohup python3 bot-control.py > /tmp/gdev-bot.log 2>&1 &
+make bot-start
 ```
 
-Consultar los registros:
+---
+
+## Consultar registros
 
 ```bash
 tail -f /tmp/gdev-bot.log
@@ -147,115 +217,135 @@ tail -f /tmp/gdev-bot.log
 
 ---
 
-# 📌 Comandos del Bot
+# 🔊 Gestión de Audio
 
-| Comando | Descripción |
-|----------|-------------|
-| `/mododev` | Activa el escritorio extendido y redirecciona el audio hacia el perfil configurado. |
-| `/apagar` | Restaura el modo Laptop y detiene el entorno virtual. |
-| `/netflix` | Ejecuta el perfil optimizado para reproducción multimedia en TV. |
-| `/scrcpy` | Inicia el control remoto para dispositivos Android mediante Scrcpy. |
+Gdev-Monitor administra automáticamente el audio utilizando `pactl`.
+
+Características:
+
+- Redirección automática hacia el monitor virtual.
+- Compatible con PulseAudio.
+- Compatible con PipeWire.
+- Sin ejecutar procesos como root.
+- Restauración automática al finalizar.
 
 ---
 
-# 🖥️ Flujo de Funcionamiento
+# 📺 Flujo de Funcionamiento
 
 ```text
-Laptop
+Usuario
+   │
+   ▼
+make start
    │
    ▼
 Carga VKMS
    │
    ▼
-Monitor Virtual
+Crea Monitor Virtual
    │
    ▼
-Configuración xrandr
+Configura xrandr
    │
    ▼
-Inicio de Sunshine
+Inicia Sunshine
    │
    ▼
-Moonlight
+Configura Audio
    │
    ▼
-TV / Tablet / PC
+Esperando Moonlight
 ```
 
 ---
 
-# 🔊 Gestión de Audio
+# ⚙️ Configuración
 
-El proyecto administra automáticamente los dispositivos de audio mediante `pactl`, permitiendo:
-
-- Redirección automática del audio.
-- Compatibilidad con PulseAudio y PipeWire.
-- Ejecución sin privilegios elevados.
-- Restauración del estado original al finalizar.
-
----
-
-# 🔐 Arquitectura de Permisos
+Los perfiles se almacenan en:
 
 ```text
-Usuario
-│
-├── Telegram Bot
-├── Sunshine
-├── Audio (pactl)
-│
-└── sudo
-      ├── modprobe
-      ├── ufw
-      └── xrandr (cuando es requerido)
+profiles/
 ```
 
----
+Ejemplo:
 
-# 📚 Scripts Principales
+```text
+profiles/
+└── tv.conf
+```
 
-### `tv-mode.sh`
+Cada perfil puede definir:
 
-- Crea el monitor virtual.
-- Configura el escritorio extendido.
-- Inicializa el audio.
-- Prepara el entorno para Sunshine.
-
----
-
-### `laptop-mode.sh`
-
-- Elimina el monitor virtual.
-- Restaura la pantalla principal.
-- Restablece el audio original.
+- resolución
+- posición del monitor
+- audio
+- aplicaciones
+- comportamiento personalizado
 
 ---
 
-### `sunshine.sh`
+# 🛠️ Comandos Make
 
-Gestiona el ciclo de vida del servidor Sunshine.
-
-- Inicio
-- Reinicio
-- Detención
-
----
-
-### `streaming-control.sh`
-
-Gestiona perfiles de streaming y automatizaciones específicas.
+| Comando | Acción |
+|----------|--------|
+| `make start` | Activa el modo TV. |
+| `make stop` | Regresa al modo Laptop. |
+| `make fix` | Recuperación automática. |
+| `make dev-apps` | Inicia los IDEs. |
+| `make bot-start` | Ejecuta el bot de Telegram. |
 
 ---
 
-### `bot-control.py`
+# 🔒 Seguridad
 
-Bot de Telegram encargado de controlar todo el sistema mediante comandos remotos.
+El proyecto utiliza reglas específicas de **sudoers** para permitir únicamente los comandos necesarios, evitando el uso de privilegios elevados de forma permanente.
+
+Los permisos se limitan a:
+
+- `modprobe`
+- `xrandr`
+- `systemctl`
+- administración de Sunshine
+- gestión de pantallas virtuales
 
 ---
 
-# 📊 Plan de Ciclo de Vida del Proyecto
+# 🚧 Roadmap
 
-El seguimiento de tareas (Backlog, To-Do, En Progreso y Finalizadas) se administra mediante **GitHub Projects**, permitiendo mantener sincronizados los sprints, los Issues y las Pull Requests sin duplicar información dentro del repositorio.
+## v2.x
+
+- [x] VKMS automático
+- [x] Integración con Sunshine
+- [x] Control mediante Telegram
+- [x] Recuperación automática
+- [x] Lanzamiento de IDEs
+- [x] Gestión de audio
+
+## Próximamente
+
+- [ ] Integración con Alexa
+- [ ] Dashboard Web
+- [ ] API REST
+- [ ] Múltiples perfiles
+- [ ] Multi-monitor
+- [ ] Detección automática de pantallas
+- [ ] Instalación mediante paquetes `.deb`
+- [ ] Actualizaciones automáticas
+
+---
+
+# 🤝 Contribuciones
+
+Las contribuciones son bienvenidas.
+
+Puedes colaborar mediante:
+
+- Pull Requests
+- Issues
+- Mejoras de documentación
+- Nuevas funcionalidades
+- Reportes de errores
 
 ---
 
@@ -263,14 +353,18 @@ El seguimiento de tareas (Backlog, To-Do, En Progreso y Finalizadas) se administ
 
 Este proyecto se distribuye bajo la licencia **MIT**.
 
-Eres libre de utilizarlo, modificarlo y distribuirlo respetando los términos de la licencia.
+Consulta el archivo:
+
+```text
+LICENSE
+```
 
 ---
 
 # ❤️ Autor
 
-Desarrollado por **GDEV**.
+Desarrollado con ❤️ por **GDEV Software Solutions**.
 
-Proyecto enfocado en simplificar la creación de escritorios virtuales en Linux y su transmisión mediante **Sunshine + Moonlight**, incorporando automatización, perfiles de configuración y control remoto.
+Si este proyecto te resulta útil, considera darle una ⭐ al repositorio y compartirlo con la comunidad.
 ````
 
